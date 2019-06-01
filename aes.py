@@ -78,7 +78,7 @@ class MyAES(object):
 
 if __name__ == '__main__':
     key = '1234567890123456'
-    to_en_data = '徐海虎好'
+    to_en_data = '待测数据'
     myAES = MyAES(key)
     encrypt_result = myAES.aes_encrypt(to_en_data)
     print(encrypt_result)

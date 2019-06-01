@@ -6,6 +6,7 @@
 # @Software: PyCharm
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from aes import MyAES
 import json
 
 
@@ -19,12 +20,18 @@ class HandleResquest(BaseHTTPRequestHandler):
     """
 
     def do_POST(self):
-        post_data = self.rfile.read(int(self.headers['content-length']))
+        post_data = self.rfile.read(int(self.headers['content-length'])).decode()
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-        print(post_data)
+        print("服务器收到信息："+post_data)
+
+        post_data = json.loads(post_data)
+        myAES = MyAES(post_data["password"])
+        en_result = myAES.aes_encrypt(post_data["to_en_data"])
+        print("服务器回复密文："+en_result)
+        self.wfile.write(json.dumps(en_result).encode())
+
 
 
 if __name__ == '__main__':

@@ -33,7 +33,6 @@ class HandleResquest(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(en_result).encode())
 
 
-
 if __name__ == '__main__':
     server = HTTPServer(host, HandleResquest)
     print("Starting server, listen at: %s:%s" % host)

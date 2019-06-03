@@ -18,8 +18,15 @@ class HandleResquest(BaseHTTPRequestHandler):
     """
     这是一个可以接收post请求，并且可以接收post中的参数
     """
+    def do_GET(self):
+        post_data = self.rfile.read(int(self.headers['content-length'])).decode()
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        print("服务器收到信息GET：" + post_data)
 
     def do_POST(self):
+        print('ok')
         post_data = self.rfile.read(int(self.headers['content-length'])).decode()
         self.send_response(200)
         self.send_header('Content-type', 'application/json')

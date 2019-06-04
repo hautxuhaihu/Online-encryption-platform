@@ -31,7 +31,7 @@ class MyAES(object):
         :param text: 待加密内容(明文), string类型
         :return:填充过的数据，string类型
         """
-        time.sleep(5)
+        time.sleep(1)
         # 明文变成bytes的长度，utf-8编码时，英文占1个byte，而中文占3个byte
         bytes_length = len(bytes(text, encoding='utf-8'))
         # 计算需要填充的长度
@@ -83,10 +83,13 @@ class MyAES(object):
 
 
 if __name__ == '__main__':
-    key = '1234567890123456'
-    to_en_data = '待测数据'
+    print("假设16字节的秘钥为："+"1234567890123456")
+    print("待加密数据为："+"qwertyuiop")
+    key = "1234567890123456"
+    to_en_data = "qwertyuiop"
     myAES = MyAES(key)
     encrypt_result = myAES.aes_encrypt(to_en_data)
-    print(encrypt_result)
+    print("加密后的密文为："+encrypt_result)
+    print("---------------------------------------")
     decrypt_result = myAES.aes_decrypt(encrypt_result)
-    print(decrypt_result)
+    print("将密文再次解密，得到明文："+decrypt_result)

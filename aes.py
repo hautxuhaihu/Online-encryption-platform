@@ -31,7 +31,7 @@ class MyAES(object):
         :param text: 待加密内容(明文), string类型
         :return:填充过的数据，string类型
         """
-        time.sleep(10)
+        time.sleep(5)
         # 明文变成bytes的长度，utf-8编码时，英文占1个byte，而中文占3个byte
         bytes_length = len(bytes(text, encoding='utf-8'))
         # 计算需要填充的长度

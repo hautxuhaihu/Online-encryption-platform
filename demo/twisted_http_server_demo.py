@@ -2,7 +2,7 @@
 # @Time    : 2019/6/3 下午8:57
 # @Author  : xuhaihu
 # @Email   : 1829755168@qq.com
-# @File    : twisted_http_server.py
+# @File    : twisted_http_server_demo.py
 # @Software: PyCharm
 
 from twisted.web import server, resource
@@ -12,13 +12,13 @@ from twisted.python.threadpool import ThreadPool
 import time
 
 # 初始化并启动线程池
-myThreadPool = ThreadPool(1, 8, 'myThreadPool')
+myThreadPool = ThreadPool(1, 1, 'myThreadPool')
 myThreadPool.start()
 
 
 def time_consuming_task(request):
     time.sleep(5)
-    request.write("Hello, world!".encode())
+    request.write("<html>Hello, world!</html>".encode())
     request.finish()
 
 
@@ -26,7 +26,8 @@ class RequestHandler(resource.Resource):
     """
     此类用于处理用户发过来的请求
     """
-
+    # 令isleaf=true，调用render函数
+    isLeaf = True
     def render_GET(self, request):
         """
         用于处理GET请求

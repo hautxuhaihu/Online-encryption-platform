@@ -13,6 +13,7 @@ from twisted.internet.threads import deferToThreadPool
 from twisted.python.threadpool import ThreadPool
 from aes import MyAES
 import json
+from read_ini import ReadINI
 
 # 初始化并启动线程池
 myThreadPool = ThreadPool(1, 5, 'myThreadPool')
@@ -30,17 +31,20 @@ def encrypt_task(request):
     """
     request_str = request.content.read().decode()
     try:
+        # json解析数据
         request_json = json.loads(request_str)
+        # 判断用户发送的数据中是否包括关键元素
         if "to_en_data" in request_json and "password" in request_json:
+            # 调用模块加密
             myAES= MyAES(request_json["password"])
             encrypt_result = myAES.aes_encrypt(request_json["to_en_data"])
             request.write(encrypt_result.encode())
-            log.debug("Got data: {data}.", data=encrypt_result)
+            log.debug("{debug}.", debug=encrypt_result)
         else:
             request.write("not found to_en_data or password".encode())
-            log.debug("Got data: {data}.", data="not found to_en_data or password")
+            log.debug("{debug}.", debug="not found to_en_data or password")
     except:
-        log.error("Got error: {error}.", error="The json data in the request cannot be parsed normally")
+        log.error("{error}", error="The json data in the request cannot be parsed normally")
     finally:
         request.finish()
 
@@ -64,7 +68,9 @@ class RequestHandler(resource.Resource):
 
 # 监听8080端口，并开始twisted的事件循环
 site = server.Site(RequestHandler())
-endpoint = endpoints.TCP4ServerEndpoint(reactor, 8080)
+port = int(ReadINI("config.ini").read("config","port"))
+endpoint = endpoints.TCP4ServerEndpoint(reactor, port)
 endpoint.listen(site)
+log.info("{info}", info="Http server is listening port %s" % port)
 reactor.run()
 

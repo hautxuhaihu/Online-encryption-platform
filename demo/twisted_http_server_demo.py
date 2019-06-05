@@ -6,10 +6,10 @@
 # @Software: PyCharm
 
 from twisted.web import server, resource
-from twisted.internet import reactor, endpoints
+from twisted.internet import reactor, endpoints, protocol
 from twisted.internet.threads import deferToThreadPool
 from twisted.python.threadpool import ThreadPool
-import time
+import time, os
 
 # 初始化并启动线程池
 myThreadPool = ThreadPool(1, 1, 'myThreadPool')
@@ -40,6 +40,54 @@ class RequestHandler(resource.Resource):
     def render_POST(self, request):
         time.sleep(5)
         print(request.content.read().decode())
+
+
+class MyPP(protocol.ProcessProtocol):
+    def __init__(self, verses):
+        self.verses = verses
+        self.data = ""
+
+    def connectionMade(self):
+        print("connectionMade!")
+        for i in range(self.verses):
+            self.transport.write("abc\n".encode())
+
+        # self.transport.closeStdin()
+
+        # self.transport.closeStdin() # tell them we're done
+
+    def outReceived(self, data):
+        print("outReceived! with %d bytes!" % len(data))
+        self.data = self.data + data.decode()
+        print(self.data)
+
+    def errReceived(self, data):
+        print("errReceived! with %d bytes!" % len(data))
+        print(self.data)
+
+    def inConnectionLost(self):
+        print("inConnectionLost! stdin is closed! (we probably did it)")
+
+    def outConnectionLost(self):
+        print("outConnectionLost! The child closed their stdout!")
+
+    def errConnectionLost(self):
+        print("errConnectionLost! The child closed their stderr.")
+
+    def processExited(self, reason):
+        print("processExited, status %d" % (reason.value.exitCode,))
+
+    def processEnded(self, reason):
+        print("processEnded, status %d" % (reason.value.exitCode,))
+        print("quitting")
+        reactor.stop()
+
+
+pp = MyPP(10)
+# reactor.spawnProcess(pp, "ls", ["ls"], childFDs = { 0: "w", 1: "r", 2: "r" , 4: "w"})
+
+reactor.spawnProcess(pp, os.environ['VIRTUAL_ENV']+"/bin/python", [os.environ['VIRTUAL_ENV']+"/bin/python", "child_process.py"],
+                     childFDs={0:"w", 1:"r", 2:2, 3:"w", 4:"r"})
 
 
 # 监听8080端口，并开始twisted的事件循环

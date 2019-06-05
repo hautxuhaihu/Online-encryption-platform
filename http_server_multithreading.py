@@ -8,12 +8,52 @@
 
 from twisted.logger import jsonFileLogObserver, Logger
 from twisted.web import server, resource
-from twisted.internet import reactor, endpoints
+from twisted.internet import reactor, endpoints, protocol
 from twisted.internet.threads import deferToThreadPool
 from twisted.python.threadpool import ThreadPool
 from aes import MyAES
-import json
+import json, os
 from read_ini import ReadINI
+
+
+class MyPP(protocol.ProcessProtocol):
+    def __init__(self):
+        self.data = ""
+
+    def connectionMade(self):
+        print("connectionMade!")
+        # self.transport.write("xuhaihu\n".encode())
+        # self.transport.closeStdin()
+
+    def outReceived(self, data):
+        print("outReceived! with %d bytes!" % len(data))
+        self.data = self.data + data.decode()
+        print(self.data)
+
+    def errReceived(self, data):
+        print("errReceived! with %d bytes!" % len(data))
+        print(self.data)
+
+    def inConnectionLost(self):
+        print("inConnectionLost! stdin is closed! (we probably did it)")
+
+    def outConnectionLost(self):
+        print("outConnectionLost! The child closed their stdout!")
+
+    def errConnectionLost(self):
+        print("errConnectionLost! The child closed their stderr.")
+
+    def processExited(self, reason):
+        print("processExited, status %d" % (reason.value.exitCode,))
+
+    def processEnded(self, reason):
+        print("processEnded, status %d" % (reason.value.exitCode,))
+        print("quitting")
+        reactor.stop()
+
+
+myPP = MyPP()
+
 
 # 初始化并启动线程池
 myThreadPool = ThreadPool(1, 5, 'myThreadPool')
@@ -30,13 +70,14 @@ def encrypt_task(request):
     :return:
     """
     request_str = request.content.read().decode()
+
     try:
         # json解析数据
         request_json = json.loads(request_str)
         # 判断用户发送的数据中是否包括关键元素
         if "to_en_data" in request_json and "password" in request_json:
             # 调用模块加密
-            myAES= MyAES(request_json["password"])
+            myAES = MyAES(request_json["password"])
             encrypt_result = myAES.aes_encrypt(request_json["to_en_data"])
             request.write(encrypt_result.encode())
             log.debug("{debug}.", debug=encrypt_result)
@@ -68,9 +109,11 @@ class RequestHandler(resource.Resource):
 
 # 监听8080端口，并开始twisted的事件循环
 site = server.Site(RequestHandler())
-port = int(ReadINI("config.ini").read("config","port"))
+port = int(ReadINI("config.ini").read("config", "port"))
 endpoint = endpoints.TCP4ServerEndpoint(reactor, port)
 endpoint.listen(site)
 log.info("{info}", info="Http server is listening port %s" % port)
+reactor.spawnProcess(myPP, os.environ['VIRTUAL_ENV']+"/bin/python", [os.environ['VIRTUAL_ENV']+"/bin/python", "child_process.py"],
+                     childFDs={0:"w", 1:"r", 2:2, 3:"w", 4:"r"})
 reactor.run()
 
